@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -33,5 +34,15 @@ export class FileController {
       console.error('File does not exist');
       res.status(404).send('File not found');
     }
+  }
+
+  @Get()
+  async getFiles(): Promise<FileEntity[]> {
+    return await this.fileService.getFiles();
+  }
+
+  @Delete(':fileId')
+  async deleteFile(@Param('fileId') fileId: string): Promise<void> {
+    await this.fileService.deleteFile(fileId);
   }
 }

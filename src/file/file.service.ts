@@ -25,7 +25,7 @@ export class FileService {
       originalFilename: file.originalname,
       size: file.size,
       mimetype: file.mimetype,
-      uploadDate: new Date(Date.now()),
+      uploadDate: timestamp,
     });
 
     return fileEntity.save();
@@ -33,17 +33,38 @@ export class FileService {
 
   async getFile(fileId: string): Promise<fs.ReadStream> {
     const fileEntity = await this.fileModel.findOne({ _id: fileId });
-    const filePath = path.join('uploads', fileEntity.filename);
 
-    return new Promise((resolve, reject) => {
-      fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-          reject(new NotFoundException('File not found'));
-        } else {
-          const stream = fs.createReadStream(filePath);
-          resolve(stream);
-        }
-      });
-    });
+    if (!fileEntity) {
+      throw new NotFoundException('File not found');
+    }
+
+    const filePath = path.resolve(this.uploadPath, fileEntity.filename);
+
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return fs.createReadStream(filePath);
+    } catch (err) {
+      throw new NotFoundException('File not found');
+    }
+  }
+
+  async getFiles(): Promise<FileEntity[]> {
+    return this.fileModel.find();
+  }
+
+  async deleteFile(fileId: string): Promise<any> {
+    const fileEntity = await this.fileModel.findByIdAndDelete(fileId);
+
+    if (!fileEntity) {
+      throw new NotFoundException('File not found');
+    }
+
+    const filePath = path.resolve(this.uploadPath, fileEntity.filename);
+
+    try {
+      await fs.promises.rm(filePath);
+    } catch (err) {
+      console.error(`Error deleting file ${filePath}:`, err);
+    }
   }
 }
