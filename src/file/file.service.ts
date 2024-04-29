@@ -31,7 +31,7 @@ export class FileService {
     return fileEntity.save();
   }
 
-  async getFile(fileId: string): Promise<fs.ReadStream> {
+  async downloadFile(fileId: string): Promise<fs.ReadStream> {
     const fileEntity = await this.fileModel.findOne({ _id: fileId });
 
     if (!fileEntity) {
@@ -46,6 +46,16 @@ export class FileService {
     } catch (err) {
       throw new NotFoundException('File not found');
     }
+  }
+
+  async getFile(fileId: string) {
+    const fileEntity = await this.fileModel.findOne({ _id: fileId });
+
+    if (!fileEntity) {
+      throw new NotFoundException('File not found');
+    }
+
+    return fileEntity;
   }
 
   async getFiles(): Promise<FileEntity[]> {

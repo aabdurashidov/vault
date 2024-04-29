@@ -25,15 +25,20 @@ export class FileController {
     return await this.fileService.uploadFile(file);
   }
 
-  @Get(':fileId')
-  async getFile(@Param('fileId') fileId: string, @Res() res: Response) {
+  @Get('download/:fileId')
+  async downloadFile(@Param('fileId') fileId: string, @Res() res: Response) {
     try {
-      const stream = await this.fileService.getFile(fileId);
+      const stream = await this.fileService.downloadFile(fileId);
       stream.pipe(res);
     } catch (error) {
       console.error('File does not exist');
       res.status(404).send('File not found');
     }
+  }
+
+  @Get(':fileId')
+  async getFile(@Param('fileId') fileId: string): Promise<FileEntity> {
+    return await this.fileService.getFile(fileId);
   }
 
   @Get()
