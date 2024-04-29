@@ -2,13 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import { FileEntity } from './file.entity';
-import { v4 as uuidv4 } from 'uuid';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class FileService {
   private readonly uploadPath: string = 'uploads/';
+
   constructor(
     @InjectModel(FileEntity.name) private fileModel: Model<FileEntity>,
   ) {}
@@ -20,19 +20,20 @@ export class FileService {
 
     await fs.promises.writeFile(uploadPath, file.buffer);
 
-    const fileEntity = new this.fileModel();
-    fileEntity.id = uuidv4();
-    fileEntity.filename = filename;
-    fileEntity.originalFilename = file.originalname;
-    fileEntity.size = file.size;
-    fileEntity.mimetype = file.mimetype;
-    fileEntity.uploadDate = new Date(timestamp);
+    const fileEntity = new this.fileModel({
+      filename: filename,
+      originalFilename: file.originalname,
+      size: file.size,
+      mimetype: file.mimetype,
+      uploadDate: new Date(Date.now()),
+    });
 
     return fileEntity.save();
   }
 
   async getFile(fileId: string): Promise<fs.ReadStream> {
-    const filePath = path.join('uploads', fileId);
+    const fileEntity = await this.fileModel.findOne({ _id: fileId });
+    const filePath = path.join('uploads', fileEntity.filename);
 
     return new Promise((resolve, reject) => {
       fs.access(filePath, fs.constants.F_OK, (err) => {
